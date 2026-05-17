@@ -1,11 +1,9 @@
 import time
-
 import nonebot
-from nonebot import logger, get_plugin_config
+from nonebot import logger
 from .events import Event
-from .config import Config
+from .config import config
 
-config = get_plugin_config(Config)
 
 def generate_event_msg(event: Event):
     message = ""

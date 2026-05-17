@@ -1,3 +1,6 @@
+# Ret 2 Shell events in Python
+# Reference: https://github.com/ret2shell/ret2shell/blob/main/crates/event/src/events.rs
+
 import json
 from dataclasses import dataclass, field
 from enum import Enum

@@ -1,6 +1,6 @@
 from nonebot.plugin import PluginMetadata
 
-from .config import Config
+from .config import config, Config
 
 __plugin_meta__ = PluginMetadata(
     # 基本信息（必填）
@@ -23,8 +23,7 @@ __plugin_meta__ = PluginMetadata(
     # 若插件只使用了 NoneBot 基本抽象，应显式填写 None，否则应该列出插件支持的适配器。
 )
 
-from nonebot import logger, get_plugin_config
-config = get_plugin_config(Config)
+from nonebot import logger
 
 if not config.target_group_id:
     logger.info("😪 TARGET_GROUP_ID not set, group messages won't be sent.")

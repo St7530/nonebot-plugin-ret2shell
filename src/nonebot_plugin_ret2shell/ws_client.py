@@ -1,14 +1,11 @@
 import asyncio
-
 from websockets.asyncio.client import connect
-from nonebot import logger, get_driver, get_plugin_config
+from nonebot import logger, get_driver
 from .events import Event, from_json
 from .send import send_event_msg
-from .config import Config
+from .config import config
 
-config = get_plugin_config(Config)
-client_label = f"nonebot-plugin-ret2shell"
-ws_uri = f"{config.ret2shell_ws_link}&client={client_label}"
+ws_uri = f"{config.ret2shell_ws_link}&client={config.client_label}"
 
 
 async def ws_client():
@@ -23,7 +20,7 @@ async def ws_client():
         try:
             # 尝试建立连接
             async with connect(ws_uri) as websocket:
-                logger.info(f"✅ Connected to event pushing API: {config.ret2shell_ws_link}")
+                logger.info(f"✅ Connected to event pushing API: {ws_uri}")
                 retry_count = 0  # 连接成功，重置计数器
 
                 # 持续监听并处理消息
@@ -36,6 +33,7 @@ async def ws_client():
         except Exception as e:
             logger.error(e)
             retry_count += 1
+            delay = base_delay
             if retry_count < max_count:
                 # 计算延迟时间，使用指数退避策略
                 # 例如: 1s, 2s, 4s, 8s...
@@ -44,16 +42,21 @@ async def ws_client():
             await asyncio.sleep(delay)
 
 
-# If we run our WebSocket client directly using the code below,
-# NoneBot's Uvicorn server will be broken.
-# asyncio.run(ws_client())
-
-# So we have to run our WebSocket client inside NoneBot's loop
+# Handle our WebSocket client according to bot connection
 driver = get_driver()
+ws_client_task: asyncio.Task
 logger.info(f"✅ Plugin loaded. Waiting for bot connection...")
 
 
 @driver.on_bot_connect
 async def run_ws_client():
-    asyncio.get_running_loop().create_task(ws_client())
+    global ws_client_task
+    logger.info(f"✅ Bot connected. Trying to connect to event pushing API...")
+    ws_client_task = asyncio.create_task(ws_client())
 
+
+@driver.on_bot_disconnect
+async def shutdown_ws_client():
+    global ws_client_task
+    logger.warning("⚠️ Bot disconnected. Closing connection to event pushing API...")
+    ws_client_task.cancel()
