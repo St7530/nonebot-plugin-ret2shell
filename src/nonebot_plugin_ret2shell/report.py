@@ -27,12 +27,12 @@ def generate_event_msg(event: Event):
 
     elif event.kind == "submission":
         timestamp = event.data.submission.created_at
-        blood_state = event.data.blood_state
-        team_name = event.data.team.name
-        challenge_tag_name = event.data.challenge.tag[0].name
-        challenge_name = event.data.challenge.name
 
         if event_type == "correct":
+            blood_state = event.data.blood_state
+            team_name = event.data.team.name
+            challenge_tag_name = event.data.challenge.tag[0].name
+            challenge_name = event.data.challenge.name
             is_debug_message = False
             if blood_state == 1:
                 message = f"""🥇 恭喜队伍 [{team_name}] 获得 [{challenge_tag_name}] 方向题目 [{challenge_name}] 的 [一血] ！"""
@@ -41,11 +41,17 @@ def generate_event_msg(event: Event):
             if blood_state == 3:
                 message = f"""🥉 恭喜队伍 [{team_name}] 获得 [{challenge_tag_name}] 方向题目 [{challenge_name}] 的 [三血] ！"""
         elif event_type == "cheated":
+            team_name = event.data.team.name
+            challenge_tag_name = event.data.challenge.tag[0].name
+            challenge_name = event.data.challenge.name
             peerteam_name = event.data.peer_team.name
             message = f"""🤥 [{challenge_tag_name}] 方向题目 [{challenge_name}] 发生作弊！\n队伍 [{team_name}] 提交了队伍 [{peerteam_name}] 的 flag"""
             is_debug_message = True
         elif event_type == "too_quick":
-            message = f"""❗️ 提交过快\n{json.dumps(event.to_dict())}"""
+            operator_name = event.data.operator.nickname
+            challenge_tag_name = event.data.challenge.tag[0].name
+            challenge_name = event.data.challenge.name
+            message = f"""❗️ 选手 [{operator_name}] 在 [{challenge_tag_name}] 方向题目 [{challenge_name}] 中提交频率过快。"""
             is_debug_message = True
 
     elif event.kind == "game":

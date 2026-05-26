@@ -45,7 +45,7 @@ async def ws_client():
 
 # Handle our WebSocket client according to bot connection
 driver = get_driver()
-ws_client_task: asyncio.Task
+ws_client_task: asyncio.Task = None
 logger.info(f"✅ Plugin loaded. Waiting for bot connection...")
 
 
@@ -54,7 +54,8 @@ async def run_ws_client():
     if len(nonebot.get_bots()) == 1:
         global ws_client_task
         logger.info(f"✅ Bot connected. Trying to connect to event pushing API...")
-        ws_client_task = asyncio.create_task(ws_client())
+        if ws_client_task is None:
+            ws_client_task = asyncio.create_task(ws_client())
 
 
 @driver.on_bot_disconnect
@@ -62,5 +63,13 @@ async def shutdown_ws_client():
     if len(nonebot.get_bots()) == 0:
         global ws_client_task
         logger.warning("⚠️ There are no bots connected. Closing connection to event pushing API...")
-        ws_client_task.cancel()
+        if ws_client_task and not ws_client_task.done():
+            ws_client_task.cancel()
+            # 等待任务实际结束
+            try:
+                await ws_client_task
+            except asyncio.CancelledError:
+                pass
+        # 确认任务彻底结束后，再清空引用
+        ws_client_task = None
 

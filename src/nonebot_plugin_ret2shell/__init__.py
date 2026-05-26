@@ -4,9 +4,9 @@ from .config import config, Config
 
 __plugin_meta__ = PluginMetadata(
     # 基本信息（必填）
-    name="Ret 2 Shell 事件播报",  # 插件名称
-    description="播报 Ret 2 Shell (回归终端) 比赛事件",  # 插件介绍
-    usage="妥善填入配置后即可播报平台事件",  # 插件用法
+    name="Ret 2 Shell 播报与查询",  # 插件名称
+    description="Ret 2 Shell (回归终端) 比赛事件播报与信息查询",  # 插件介绍
+    usage="详见 README.md",  # 插件用法
 
     # 发布额外信息
     type="application",  # 插件分类

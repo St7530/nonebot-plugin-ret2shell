@@ -15,7 +15,7 @@ api_base_url = f"https://{socket}/api"
 
 # Try HTTPS
 async def try_https():
-    logger.info(f" Validating if {socket} supports HTTPS...")
+    logger.info(f"🔐 Validating if {socket} supports HTTPS...")
     global api_base_url
     try:
         async with httpx.AsyncClient() as client:
