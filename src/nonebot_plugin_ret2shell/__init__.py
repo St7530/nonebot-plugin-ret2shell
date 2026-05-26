@@ -32,5 +32,5 @@ if not config.admin_id:
 if not config.ret2shell_ws_link:
     logger.info("😪 RET2SHELL_WS_LINK not set, the plugin won't function.")
 else:
-    from . import ws_client
+    from . import command, ws_client
 

@@ -1,17 +1,18 @@
 import asyncio
+
+import nonebot
 from websockets.asyncio.client import connect
 from nonebot import logger, get_driver
 from .events import Event, from_json
-from .send import send_event_msg
+from .report import send_event_msg
 from .config import config
-
-ws_uri = f"{config.ret2shell_ws_link}&client={config.client_label}"
 
 
 async def ws_client():
     """
     带有自动重连机制的 WebSocket 客户端
     """
+    ws_uri = f"{config.ret2shell_ws_link}&client={config.client_label}"
     max_count = 8  # 最大翻倍次数
     retry_count = 0
     base_delay = 1  # 初始重连延迟（秒）
@@ -50,13 +51,16 @@ logger.info(f"✅ Plugin loaded. Waiting for bot connection...")
 
 @driver.on_bot_connect
 async def run_ws_client():
-    global ws_client_task
-    logger.info(f"✅ Bot connected. Trying to connect to event pushing API...")
-    ws_client_task = asyncio.create_task(ws_client())
+    if len(nonebot.get_bots()) == 1:
+        global ws_client_task
+        logger.info(f"✅ Bot connected. Trying to connect to event pushing API...")
+        ws_client_task = asyncio.create_task(ws_client())
 
 
 @driver.on_bot_disconnect
 async def shutdown_ws_client():
-    global ws_client_task
-    logger.warning("⚠️ Bot disconnected. Closing connection to event pushing API...")
-    ws_client_task.cancel()
+    if len(nonebot.get_bots()) == 0:
+        global ws_client_task
+        logger.warning("⚠️ There are no bots connected. Closing connection to event pushing API...")
+        ws_client_task.cancel()
+

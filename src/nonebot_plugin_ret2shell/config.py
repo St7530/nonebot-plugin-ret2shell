@@ -7,7 +7,7 @@ class Config(BaseModel):
     ret2shell_ws_link: Optional[str] = None
     target_group_id: Optional[int] = None
     admin_id: Optional[int] = None
-    client_label: Optional[str] = "nonebot-plugin-ret2shell"
+    client_label: str = "nonebot-plugin-ret2shell"
 
 
 config = get_plugin_config(Config)
