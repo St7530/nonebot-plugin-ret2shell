@@ -96,9 +96,9 @@ async def generate_event_msg(event: Event):
                 message = f"""📢 新通知: [{notification_title}]\n请前往比赛平台查看。"""
 
         if event_type == "freeze":
-            message = f"""🧊 比赛已冻结。"""
+            message = """🧊 比赛已冻结。"""
         if event_type == "unfreeze":
-            message = f"""🌊 比赛已解冻。"""
+            message = """🌊 比赛已解冻。"""
 
     elif event.kind == "chat":
         team_name = event.data.team.name
@@ -114,11 +114,11 @@ async def generate_event_msg(event: Event):
         msg_type = "ops"
 
         if event_type == "cluster_overloaded":
-            message = f"""👿 集群超载\n"""
+            message = """👿 集群超载\n"""
         if event_type == "cluster_recovered":
-            message = f"""👿 集群恢复\n"""
+            message = """👿 集群恢复\n"""
         if event_type == "server_panic":
-            message = f"""👿 服务崩溃\n"""
+            message = """👿 服务崩溃\n"""
 
         message += json.dumps(event.to_dict())
 
@@ -138,12 +138,12 @@ async def send_event_msg(event: Event):
 
 
 async def task_game_start():
-    message = f"""🏁 比赛已开始！"""
+    message = """🏁 比赛已开始！"""
     await send_public_msg(message)
 
 
 async def task_game_end():
-    message = f"""🎉 比赛已结束。"""
+    message = """🎉 比赛已结束。"""
     await send_public_msg(message)
 
 

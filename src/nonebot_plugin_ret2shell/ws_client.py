@@ -21,7 +21,7 @@ async def ws_client():
         try:
             # 尝试建立连接
             async with connect(ws_uri, user_agent_header=f"{websockets.http11.USER_AGENT} {config.client_label}/{__version__}") as websocket:
-                logger.opt(colors=True).success(f"✅ Connected to event pushing WebSocket API: <y>{ws_uri}</y>")
+                logger.opt(colors=True).success(f"✅ Connected to WebSocket event API: <y>{ws_uri}</y>")
                 retry_count = 0  # 连接成功，重置计数器
 
                 # 持续监听并处理消息
@@ -41,7 +41,6 @@ async def ws_client():
                 delay = 2 ** (retry_count - 1)
             logger.warning(f"⚠️ Connection lost. Reconnecting in {delay}s... (Attempt {retry_count})")
             await send_ops_msg(f"👿 运行异常\n{e}")
-            exit()
             await asyncio.sleep(delay)
 
 
@@ -55,7 +54,7 @@ logger.info(f"✅ Plugin loaded. Waiting for bot connection...")
 async def run_ws_client():
     if len(nonebot.get_bots()) == 1:
         global ws_client_task
-        logger.info(f"✅ Bot ready. Connecting to event pushing WebSocket API...")
+        logger.info(f"✅ Bot ready. Connecting to WebSocket event API...")
         if ws_client_task is None:
             ws_client_task = asyncio.create_task(ws_client())
 
@@ -64,7 +63,7 @@ async def run_ws_client():
 async def shutdown_ws_client():
     if len(nonebot.get_bots()) == 0:
         global ws_client_task
-        logger.warning("⚠️ There are no bots connected. Closing connection to event pushing API...")
+        logger.warning("⚠️ There are no bots connected. Closing connection to WebSocket event API...")
         if ws_client_task and not ws_client_task.done():
             ws_client_task.cancel()
             # 等待任务实际结束

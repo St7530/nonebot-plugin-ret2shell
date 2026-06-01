@@ -60,10 +60,12 @@ async def solve_pow(criteria: str) -> str:
 async def login():
     captcha_response = await client.get("/account/captcha")
     captcha_data = captcha_response.json()
+    captcha_validator = captcha_data.get("validator")
     captcha_id = captcha_data.get("id")
     captcha_challenge = captcha_data.get("challenge")
-
-    captcha_answer = await solve_pow(captcha_challenge)
+    captcha_answer = "0xDEADBEEF"
+    if captcha_validator == "pow":
+        captcha_answer = await solve_pow(captcha_challenge)
 
     login_json = {
         "account": config.ret2shell_account,

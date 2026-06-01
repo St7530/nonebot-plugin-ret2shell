@@ -32,7 +32,7 @@ _✨ Ret 2 Shell (回归终端) 比赛事件播报与信息查询 ✨_
 ```env
 DRIVER=~fastapi+~websockets
 
-RET2SHELL_WS_LINK=ws://ret.sh.cn/api/event/connect?game_id=1&token=mn7Me1rkMLUbJj-iyHbu0
+RET2SHELL_WS_LINK=wss://ret.sh.cn/api/event/connect?game_id=1&token=mn7Me1rkMLUbJj-iyHbu0
 RET2SHELL_ACCOUNT=_bot
 RET2SHELL_PASSWORD=P@sSw0Rd
 TARGET_GROUP_ID=123456789
@@ -52,5 +52,5 @@ ADMIN_ID=987654321
 |:-----------------------:|:------:|
 |          /game          | 查询赛事信息 |
 |          /rank          | 查询积分板  |
-| /challenge challenge_id | 查询题目信息 |
-|      /team team_id      | 查询队伍信息 |
+| /challenge `challenge_id` | 查询题目信息 |
+|      /team `team_id`      | 查询队伍信息 |

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nonebot-plugin-ret2shell"
-version = "0.0.6"
+version = "0.0.7"
 authors = [
   { name="st7530", email="st7530@outlook.it" },
 ]
