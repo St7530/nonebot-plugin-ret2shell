@@ -1,9 +1,13 @@
-from .http_api import get_game_info, get_scoreboard
+from nonebot import on_command
+from nonebot.adapters import Message
+from nonebot.params import CommandArg
+from .http_api import get_game_info, get_scoreboard, get_challenge_info, get_team_info
+from .config import config
 
-from nonebot import on_command, logger
-
-game = on_command("game", aliases={"比赛"})
-rank = on_command("rank", aliases={"排名"})
+game = on_command("game", aliases={"比赛", "赛事"})
+rank = on_command("rank", aliases={"scoreboard", "排名", "积分板"})
+challenge = on_command("challenge", aliases={"题目"})
+team = on_command("team", aliases={"队伍"})
 plugin_help = on_command("help", aliases={"帮助"})
 
 
@@ -19,8 +23,32 @@ async def handle_rank():
     await rank.finish(message)
 
 
+@challenge.handle()
+async def handle_challenge(args: Message = CommandArg()):
+    if not config.ret2shell_account or not config.ret2shell_password:
+        return
+    elif challenge_id := args.extract_plain_text():
+        message = await get_challenge_info(int(challenge_id))
+        await challenge.finish(message, reply_message=True)
+    else:
+        await challenge.finish("❔ 请输入题目 id", reply_message=True)
+
+
+@team.handle()
+async def handle_team(args: Message = CommandArg()):
+    if not config.ret2shell_account or not config.ret2shell_password:
+        return
+    elif team_id := args.extract_plain_text():
+        message = await get_team_info(int(team_id))
+        await team.finish(message, reply_message=True)
+    else:
+        await team.finish("❔ 请输入队伍 id", reply_message=True)
+
+
 @plugin_help.handle()
 async def handle_help():
-    message = """🧩 nonebot-plugin-ret2shell\n/game 查看比赛信息\n/rank 查看比赛积分板"""
+    message = """🧩 nonebot-plugin-ret2shell\n\n/game 查询赛事信息\n/rank 查询积分板"""
+    if config.ret2shell_account and config.ret2shell_password:
+        message += """\n/challenge id 查看对应题目信息\n/team id 查看对应队伍信息"""
     await plugin_help.finish(message)
 

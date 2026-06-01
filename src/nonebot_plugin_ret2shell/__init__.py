@@ -6,7 +6,7 @@ __plugin_meta__ = PluginMetadata(
     # 基本信息（必填）
     name="Ret 2 Shell 播报与查询",  # 插件名称
     description="Ret 2 Shell (回归终端) 比赛事件播报与信息查询",  # 插件介绍
-    usage="详见 README.md",  # 插件用法
+    usage="详见 README",  # 插件用法
 
     # 发布额外信息
     type="application",  # 插件分类
@@ -25,12 +25,16 @@ __plugin_meta__ = PluginMetadata(
 
 from nonebot import logger
 
-if not config.target_group_id:
-    logger.info("😪 TARGET_GROUP_ID not set, group messages won't be sent.")
-if not config.admin_id:
-    logger.info("😪 ADMIN_ID not set, private messages won't be sent.")
+if not config.ret2shell_account or not config.ret2shell_password:
+    logger.opt(colors=True).warning('😪 "<y>RET2SHELL_ACCOUNT</y>" or "<y>RET2SHELL_PASSWORD</y>" not set, some details won\'t be fetched.')
+    logger.opt(colors=True).warning('😪 "<y>RET2SHELL_ACCOUNT</y>" or "<y>RET2SHELL_PASSWORD</y>" not set, some inquiries won\'t be handled.')
+if not config.public_group_id:
+    logger.opt(colors=True).warning('😪 "<y>TARGET_GROUP_ID</y>" not set, group messages won\'t be sent.')
+if not config.ops_id:
+    logger.opt(colors=True).warning('😪 "<y>ADMIN_ID</y>" not set, private messages won\'t be sent.')
+
 if not config.ret2shell_ws_link:
-    logger.info("😪 RET2SHELL_WS_LINK not set, the plugin won't function.")
+    logger.opt(colors=True).critical('😪 "<y>RET2SHELL_WS_LINK</y>" not set, the plugin won\'t function.')
 else:
     from . import command, ws_client
 
