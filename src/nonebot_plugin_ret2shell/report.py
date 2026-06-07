@@ -133,7 +133,7 @@ async def send_event_msg(event: Event):
         await send_public_msg(message)
     elif msg_type == "admin":
         await send_admin_msg(message)
-    else:
+    elif msg_type == "ops":
         await send_ops_msg(message)
 
 

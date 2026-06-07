@@ -123,18 +123,8 @@ async def get_game_info():
     return f"""🎯 赛事: {name}\n简介: {brief}\n时间: {time.strftime("%Y/%m/%d %H:%M", time.localtime(start_at))} - {time.strftime("%Y/%m/%d %H:%M", time.localtime(end_at))}\n链接: {str(client.base_url).replace("/api/", "")}/games/{game_id}"""
 
 
-async def get_scoreboard(show_non_positive: bool = False):
-    params = {
-        'page': '1',
-        'page_size': '10',
-        'order': 'score',
-        'asc': 'false',
-        'min_state': '3',
-    }
-    data = await get_api_json(f"/game/{game_id}/team", params=params)
-
-    teams = data[0]
-    message: str = "🏆 积分板"
+async def generate_rank_msg(teams: list, show_non_positive=False):
+    message: str = ""
     for index, (team) in enumerate(teams, start=1):
         if index == 1:
             index = "🥇"
@@ -152,8 +142,105 @@ async def get_scoreboard(show_non_positive: bool = False):
             continue
         else:
             message += f"""\n{index} [{team_name}] {team_score} pts"""
+
+    if message == "":
+        message = "暂无队伍得分"
     message += f"""\n更新时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
     return message
+
+
+async def get_rank(size=10):
+    params = {
+        'page': '1',
+        'page_size': size,
+        'order': 'score',
+        'asc': 'false',
+        'min_state': '3',
+    }
+    data = await get_api_json(f"/game/{game_id}/team", params=params)
+
+    message: str = "🏆 积分板"
+    message += await generate_rank_msg(teams=data[0])
+    return message
+
+
+async def get_tag_rank(tag_lowered: str, size=10):
+    tags: list = []
+
+    # Build tags
+    challenges_data = await get_api_json(f"/game/{game_id}/challenge/")
+    challenges = challenges_data[0]
+    for challenge in challenges:
+        challenge_tag_name = challenge.get("tag")[0].get("name")
+        challenge_id = challenge.get("id")
+        challenge_scorerule_initial = challenge.get("score_rule").get("initial")
+        for tag in tags:
+            if tag.get("name") == challenge_tag_name:
+                tag["challenges"].append({
+                    "challenge_id": challenge_id,
+                    "initial_score": challenge_scorerule_initial,
+                })
+                break
+        else:
+            new_tag = {
+                "name": challenge_tag_name,
+                "name_lowered": challenge_tag_name.lower(),
+                "challenges": [{
+                    "challenge_id": challenge_id,
+                    "initial_score": challenge_scorerule_initial,
+                }]
+            }
+            tags.append(new_tag)
+
+    # Build teams
+    for tag in tags:
+        if tag.get("name_lowered") == tag_lowered:
+            teams: list = []
+            game_data = await get_api_json(f"/game/{game_id}")
+            game_award_rates = game_data.get("award_rates") # blood reward score ratio
+            for challenge in tag.get("challenges"):
+                challenge_id = challenge.get("challenge_id")
+                challenge_initial_score = challenge.get("initial_score")
+                params = {
+                    'page': '1',
+                    'page_size': size,
+                    "only_solved": "true"
+                }
+                submissions_data = await get_api_json(f"/game/{game_id}/challenge/{challenge_id}/submission", params=params)
+                submissions = submissions_data[0]
+                submissions.sort(key=lambda x: (x["created_at"]))
+
+                for index, (submission) in enumerate(submissions):
+                    submission_team_id = submission.get("team_id")
+                    submission_team_name = submission.get("team_name")
+                    submission_score = submission.get("score")
+                    submission_created_at = submission.get("created_at")
+
+                    if index < 3:
+                        total_score = submission_score + int(challenge_initial_score * game_award_rates[index] / 100)
+                        logger.debug(total_score)
+                    else:
+                        total_score = submission_score
+
+                    for team in teams:
+                        if team.get("id") == submission_team_id:
+                            team["score"] += total_score
+                            team["last_updated_at"] = max(submission_created_at, team.get("last_updated_at"))
+                            break
+                    else:
+                        new_team = {
+                            "id": submission_team_id,
+                            "name": submission_team_name,
+                            "score": total_score,
+                            "last_updated_at": submission_created_at,
+                        }
+                        teams.append(new_team)
+            teams.sort(key=lambda x: (-x["score"], x["last_updated_at"]))
+
+            message: str = f"🏆 [{tag.get("name")}] 方向排名"
+            message += await generate_rank_msg(teams=teams)
+            return message
+    return None
 
 
 async def get_challenge_info(challenge_id: int):

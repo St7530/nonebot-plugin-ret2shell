@@ -5,7 +5,7 @@ from .config import config, Config
 __plugin_meta__ = PluginMetadata(
     # 基本信息（必填）
     name="Ret 2 Shell 播报与查询",  # 插件名称
-    description="Ret 2 Shell (回归终端) 比赛事件播报与信息查询",  # 插件介绍
+    description="Ret 2 Shell (回归终端) 赛事事件播报与信息查询",  # 插件介绍
     usage="详见 README",  # 插件用法
 
     # 发布额外信息
@@ -36,5 +36,5 @@ if not config.ops_id:
 if not config.ret2shell_ws_link:
     logger.opt(colors=True).critical('😪 "<y>RET2SHELL_WS_LINK</y>" not set, the plugin won\'t function.')
 else:
-    from . import command, ws_client
+    from . import command, ws_client, webhook
 

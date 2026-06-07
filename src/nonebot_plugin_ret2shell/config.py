@@ -7,6 +7,7 @@ class Config(BaseModel):
     ret2shell_ws_link: Optional[str] = None
     ret2shell_account: Optional[str] = None
     ret2shell_password: Optional[str] = None
+    webhook_route: str = "/webhook"
     public_group_id: Optional[int] = None
     admin_group_id: Optional[int] = None
     ops_id: Optional[int] = None
