@@ -7,8 +7,6 @@ _✨ Ret 2 Shell (回归终端) 赛事事件播报与信息查询 ✨_
 
 对接 [Ret 2 Shell (回归终端)](https://ret.sh.cn/) **事件推送 WebSocket API**、**平台 HTTP API** 和 **生命周期 Webhook 服务**，实现赛事事件播报和信息查询功能。
 
-[🔗 Wiki 文档](https://github.com/St7530/nonebot-plugin-ret2shell/wiki)
-
 ## 💿 安装
 
 在 NoneBot 机器人项目的根目录下执行插件安装命令：
@@ -30,6 +28,7 @@ _✨ Ret 2 Shell (回归终端) 赛事事件播报与信息查询 ✨_
 |       OPS_ID       |   否   |             管理员号，留空则不会播报运维事件。             |
 
 示例：
+
 ```env
 DRIVER=~fastapi+~websockets
 
@@ -37,15 +36,17 @@ RET2SHELL_WS_LINK=wss://ret.sh.cn/api/event/connect?game_id=1&token=mn7Me1rkMLUb
 RET2SHELL_ACCOUNT=_bot
 RET2SHELL_PASSWORD=P@sSw0Rd
 WEBHOOK_ROUTE=/WeBH00K
-TARGET_GROUP_ID=123456789
+PUBLIC_GROUP_ID=123456789
 ADMIN_GROUP_ID=987654321
-ADMIN_ID=111222333
+OPS_ID=111222333
 ```
+
+如需了解更多，请查看：[🔗 Wiki 文档](https://github.com/St7530/nonebot-plugin-ret2shell/wiki)
 
 
 ## 🎉 使用
 
-安装、配置得当后，启动 NoneBot，通过 OneBot V11 适配器连接 bot，插件即可开始工作。
+安装、配置得当后，启动 NoneBot，[通过 OneBot V11 适配器连接 bot](https://onebot.adapters.nonebot.dev/docs/guide/setup/#onebot-v11)，插件即可开始工作。
 
 ### 查询指令表
 
