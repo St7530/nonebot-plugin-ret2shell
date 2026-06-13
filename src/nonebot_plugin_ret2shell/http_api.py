@@ -15,12 +15,17 @@ token: str = "not_logged_in"
 
 
 async def init_http_api():
+    """
+    解析 RET2SHELL_WS_LINK，初始化 client、api_base_url 和 game_id
+
+    这个函数仅在 NoneBot 启动时运行。
+    """
     ws_link = config.ret2shell_ws_link
     urlparsed = urlparse(ws_link)
     scheme = urlparsed.scheme
     socket = urlparsed.netloc
 
-    global api_base_url, game_id, client
+    global client, api_base_url, game_id
     api_base_url = f'{"https" if scheme == "wss" else "http"}://{socket}/api'
     client = httpx.AsyncClient(base_url=api_base_url, headers={"User-Agent": f"python-httpx/{httpx.__version__} {config.client_label}/{__version__}"})
     game_id = dict(parse_qsl(urlparsed.query)).get("game_id")
@@ -58,6 +63,9 @@ async def solve_pow(criteria: str) -> str:
 
 
 async def login():
+    """
+    获取并计算出验证码挑战，使用账号密码登录，更新 token
+    """
     captcha_response = await client.get("/account/captcha")
     captcha_data = captcha_response.json()
     captcha_validator = captcha_data.get("validator")
@@ -85,23 +93,32 @@ async def login():
 
 
 async def get_api_json(api_entry_uri: str, headers: dict = None, **kwargs):
+    """
+    使用 GET 方法请求特定 HTTP API，支持自定义 headers、params 等参数，获取响应 json，返回 dict
+    """
     final_headers = {"Authorization": f"Bearer {token}", **(headers or {})}
-    response = await client.get(api_entry_uri, headers=final_headers, **kwargs)
+    try:
+        response = await client.get(api_entry_uri, headers=final_headers, **kwargs)
 
-    if response.status_code == 200:
-        data = response.json()
-        logger.opt(colors=True).debug(f'🌐 <m>HTTP</m> <y>{api_entry_uri}</y> | {data}')
-        return data
-    elif response.status_code == 401:
-        if not config.ret2shell_account or not config.ret2shell_password:
-            return None
-        logger.opt(colors=True).info(f'🌐 <m>HTTP</m> <y>{api_entry_uri}</y> | 🔑 Token expired, re-logging in...')
-        await login()
-        return await get_api_json(api_entry_uri, headers, **kwargs)
+        if response.status_code == 200:
+            data = response.json()
+            logger.opt(colors=True).debug(f'🌐 <m>HTTP</m> <y>{api_entry_uri}</y> | {data}')
+            return data
+        elif response.status_code == 401:
+            if not config.ret2shell_account or not config.ret2shell_password:
+                return None
+            logger.opt(colors=True).info(f'🌐 <m>HTTP</m> <y>{api_entry_uri}</y> | 🔑 Token expired, re-logging in...')
+            await login()
+            return await get_api_json(api_entry_uri, headers, **kwargs)
+    except Exception:
+        logger.opt(colors=True).error(f'🌐 <m>HTTP</m> <y>{api_entry_uri}</y> | ❌ Connection failed.')
     return None
 
 
 async def get_game_timestamp():
+    """
+    获取赛事开始时间戳、结束时间戳
+    """
     data = await get_api_json(f"/game/{game_id}")
 
     if data is None:
@@ -113,17 +130,23 @@ async def get_game_timestamp():
         return start_at, end_at
 
 
-async def get_game_info():
+async def generate_game_msg():
+    """
+    获取赛事信息，并生成消息
+    """
     data = await get_api_json(f"/game/{game_id}")
 
     name = data.get("name")
     brief = data.get("brief")
     start_at = data.get("start_at")
     end_at = data.get("end_at")
-    return f"""🎯 赛事: {name}\n简介: {brief}\n时间: {time.strftime("%Y/%m/%d %H:%M", time.localtime(start_at))} - {time.strftime("%Y/%m/%d %H:%M", time.localtime(end_at))}\n链接: {str(client.base_url).replace("/api/", "")}/games/{game_id}"""
+    return f"""🎯 赛事: {name}\n简介: {brief}\n时间: {time.strftime("%Y/%m/%d %H:%M", time.localtime(start_at))} - {time.strftime("%Y/%m/%d %H:%M", time.localtime(end_at))}\n链接: {str(api_base_url).replace("/api", "")}/games/{game_id}"""
 
 
-async def generate_rank_msg(teams: list, show_non_positive=False):
+async def generate_rank_msg_by_team(teams: list, show_non_positive=False):
+    """
+    接收一个已排序的队伍 list，生成排行榜消息
+    """
     message: str = ""
     for index, (team) in enumerate(teams, start=1):
         if index == 1:
@@ -144,12 +167,15 @@ async def generate_rank_msg(teams: list, show_non_positive=False):
             message += f"""\n{index} [{team_name}] {team_score} pts"""
 
     if message == "":
-        message = "暂无队伍得分"
+        message = """暂无队伍得分"""
     message += f"""\n更新时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
     return message
 
 
-async def get_rank(size=10):
+async def generate_rank_msg(size=10):
+    """
+    获取总分前十队伍信息，并生成积分榜消息
+    """
     params = {
         'page': '1',
         'page_size': size,
@@ -159,12 +185,15 @@ async def get_rank(size=10):
     }
     data = await get_api_json(f"/game/{game_id}/team", params=params)
 
-    message: str = "🏆 积分板"
-    message += await generate_rank_msg(teams=data[0])
+    message: str = """🏆 积分板"""
+    message += await generate_rank_msg_by_team(teams=data[0])
     return message
 
 
-async def get_tag_rank(tag_lowered: str, size=10):
+async def generate_tag_rank_msg(tag_lowered: str, size=10):
+    """
+    接收一个小写的题目标签 str，获取该题目标签下的所有题目、赛事血分比例、得分队伍信息，将队伍按照所得分数和最后得分时间排序，生成该方向的排名消息
+    """
     tags: list = []
 
     # Build tags
@@ -208,6 +237,8 @@ async def get_tag_rank(tag_lowered: str, size=10):
                 }
                 submissions_data = await get_api_json(f"/game/{game_id}/challenge/{challenge_id}/submission", params=params)
                 submissions = submissions_data[0]
+                # Delete game admin's submissions whose team_id is None
+                submissions = [s for s in submissions if s.get('team_id') is not None]
                 submissions.sort(key=lambda x: (x["created_at"]))
 
                 for index, (submission) in enumerate(submissions):
@@ -218,7 +249,6 @@ async def get_tag_rank(tag_lowered: str, size=10):
 
                     if index < 3:
                         total_score = submission_score + int(challenge_initial_score * game_award_rates[index] / 100)
-                        logger.debug(total_score)
                     else:
                         total_score = submission_score
 
@@ -237,13 +267,16 @@ async def get_tag_rank(tag_lowered: str, size=10):
                         teams.append(new_team)
             teams.sort(key=lambda x: (-x["score"], x["last_updated_at"]))
 
-            message: str = f"🏆 [{tag.get("name")}] 方向排名"
-            message += await generate_rank_msg(teams=teams)
+            message: str = f"""🏆 [{tag.get("name")}] 方向排名"""
+            message += await generate_rank_msg_by_team(teams=teams)
             return message
     return None
 
 
-async def get_challenge_info(challenge_id: int):
+async def generate_challenge_msg(challenge_id: int):
+    """
+    接收一个题目 id，获取该题目信息，并生成消息
+    """
     data = await get_api_json(f"/game/{game_id}/challenge/{challenge_id}")
 
     if data is None:
@@ -259,7 +292,10 @@ async def get_challenge_info(challenge_id: int):
     return f"""🚩 题目: [{name}]\n方向: [{tag_name}]\n当前分数: {score} pts\n已解出数: {solves}"""
 
 
-async def get_team_info(team_id: int):
+async def generate_team_msg(team_id: int):
+    """
+    接收一个队伍 id，获取该队伍信息，并生成消息
+    """
     data = await get_api_json(f"/game/{game_id}/team/{team_id}")
 
     if data is None:
@@ -270,10 +306,13 @@ async def get_team_info(team_id: int):
         score = data.get("score")
         rank_data = await get_api_json(f"/game/{game_id}/team/{team_id}/rank")
         rank = rank_data
-        return f"""🧑‍🤝‍🧑 队伍: [{name}]\n{"" if tag is None else f"标签: {tag}\n"}当前分数: {score} pts\n当前排名: {rank}"""
+        return f"""🧑‍💻 队伍: [{name}]\n{"" if tag is None else f"标签: {tag}\n"}当前分数: {score} pts\n当前排名: {rank}"""
 
 
 async def get_hint_details(challenge_id: int):
+    """
+    接收一个题目 id，获取该题目最新的提示，返回其花费分数、内容和创建时间
+    """
     data = await get_api_json(f"/game/{game_id}/challenge/{challenge_id}/hint")
 
     latest_hint = data[-1]
@@ -284,6 +323,9 @@ async def get_hint_details(challenge_id: int):
 
 
 async def get_notification_details(title: str):
+    """
+    接收一个通知标题 str，返回该通知内容和发布时间
+    """
     data = await get_api_json(f"/game/{game_id}/notification/")
 
     for notification in data:

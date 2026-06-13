@@ -12,6 +12,9 @@ from .config import config
 
 
 async def send_public_msg(message: str):
+    """
+    向 PUBLIC_GROUP_ID 发送公开消息
+    """
     logger.info(f"✉️ Generated public message: \n{message}")
     if config.public_group_id:
         for bot in nonebot.get_bots().values():
@@ -19,6 +22,9 @@ async def send_public_msg(message: str):
 
 
 async def send_admin_msg(message: str):
+    """
+    向 ADMIN_GROUP_ID 发送管理消息
+    """
     logger.info(f"✉️ Generated admin message: \n{message}")
     if config.admin_group_id:
         for bot in nonebot.get_bots().values():
@@ -26,6 +32,9 @@ async def send_admin_msg(message: str):
 
 
 async def send_ops_msg(message: str):
+    """
+    向 OPS_ID 发送运维消息
+    """
     logger.info(f"✉️ Generated ops message: \n{message}")
     if config.ops_id:
         for bot in nonebot.get_bots().values():
@@ -33,6 +42,9 @@ async def send_ops_msg(message: str):
 
 
 async def generate_event_msg(event: Event):
+    """
+    根据事件生成消息
+    """
     event_type = event.data.event_type.value
     message: str = "❔ 未知事件"
     timestamp: int = 0
@@ -128,6 +140,9 @@ async def generate_event_msg(event: Event):
 
 
 async def send_event_msg(event: Event):
+    """
+    接收一个事件，先根据其生成消息，再发送
+    """
     message, msg_type = await generate_event_msg(event)
     if msg_type == "public":
         await send_public_msg(message)
@@ -150,15 +165,14 @@ async def task_game_end():
 driver = get_driver()
 @driver.on_startup
 async def schedule_tasks():
+    """
+    运行 init_http_api()，获取赛事起止时间，为比赛开始和比赛结束的播报设置定时任务
+    """
     await init_http_api()
     start_timestamp, end_timestamp = await get_game_timestamp()
     start_time = datetime.fromtimestamp(start_timestamp)
     end_time = datetime.fromtimestamp(end_timestamp)
     logger.opt(colors=True).info(f'🎯 Game starts at "<y>{start_time}</y>", ends at "<y>{end_time}</y>". Scheduling tasks...')
-    scheduler.add_job(
-        task_game_start, "date", run_date=start_time
-    )
-    scheduler.add_job(
-        task_game_end, "date", run_date=end_time
-    )
+    scheduler.add_job(task_game_start, "date", run_date=start_time)
+    scheduler.add_job(task_game_end, "date", run_date=end_time)
 

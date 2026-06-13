@@ -25,16 +25,17 @@ __plugin_meta__ = PluginMetadata(
 
 from nonebot import logger
 
-if not config.ret2shell_account or not config.ret2shell_password:
-    logger.opt(colors=True).warning('😪 "<y>RET2SHELL_ACCOUNT</y>" or "<y>RET2SHELL_PASSWORD</y>" not set, some details won\'t be fetched.')
-    logger.opt(colors=True).warning('😪 "<y>RET2SHELL_ACCOUNT</y>" or "<y>RET2SHELL_PASSWORD</y>" not set, some inquiries won\'t be handled.')
-if not config.public_group_id:
-    logger.opt(colors=True).warning('😪 "<y>TARGET_GROUP_ID</y>" not set, group messages won\'t be sent.')
-if not config.ops_id:
-    logger.opt(colors=True).warning('😪 "<y>ADMIN_ID</y>" not set, private messages won\'t be sent.')
-
 if not config.ret2shell_ws_link:
     logger.opt(colors=True).critical('😪 "<y>RET2SHELL_WS_LINK</y>" not set, the plugin won\'t function.')
 else:
     from . import command, ws_client, webhook
+
+if not config.ret2shell_account or not config.ret2shell_password:
+    logger.opt(colors=True).warning('😪 "<y>RET2SHELL_ACCOUNT</y>" or "<y>RET2SHELL_PASSWORD</y>" not set, some details won\'t be fetched, some queries won\'t be handled.')
+if not config.public_group_id:
+    logger.opt(colors=True).warning('😪 "<y>PUBLIC_GROUP_ID</y>" not set, public messages won\'t be sent.')
+if not config.admin_group_id:
+    logger.opt(colors=True).warning('😪 "<y>ADMIN_GROUP_ID</y>" not set, admin messages won\'t be sent.')
+if not config.ops_id:
+    logger.opt(colors=True).warning('😪 "<y>OPS_ID</y>" not set, ops messages won\'t be sent.')
 

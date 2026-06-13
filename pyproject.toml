@@ -4,13 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nonebot-plugin-ret2shell"
-version = "0.0.8"
-authors = [
-  { name="st7530", email="st7530@outlook.it" },
-]
+authors = [{ name="St7530", email="st7530@outlook.it" }]
 description = "Integrate with Ret 2 Shell (回归终端) to forward event messages and query info."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.9,<4"
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
 dependencies = [
@@ -20,7 +17,12 @@ dependencies = [
     "websockets>=14.0",
     "httpx>=0.23.0"
 ]
+dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://github.com/St7530/nonebot-plugin-ret2shell"
+Documentation = "https://github.com/St7530/nonebot-plugin-ret2shell#readme"
 Issues = "https://github.com/St7530/nonebot-plugin-ret2shell/issues"
+
+[tool.hatch.version]
+path = "src/nonebot_plugin_ret2shell/__version__.py"

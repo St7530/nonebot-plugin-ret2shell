@@ -6,6 +6,9 @@ from .config import config
 
 
 async def response_json(json_data: dict, status_code: int = 200):
+    """
+    根据 dict 数据和状态码，返回 application/json 响应
+    """
     return Response(
         status_code=status_code,
         headers={"Content-Type": "application/json"},
@@ -42,22 +45,18 @@ async def webhook(request: Request):
     return await response_json({"success": True})
 
 
-webhook_server_mounted: bool = False
 driver = get_driver()
-@driver.on_bot_connect
+@driver.on_startup
 async def run_webhook_server():
-    global webhook_server_mounted
-    if not webhook_server_mounted:
-        # Setup Webhook Route
-        if isinstance(driver, ASGIMixin):
-            driver.setup_http_server(
-                HTTPServerSetup(
-                    path=URL(config.webhook_route),
-                    method="POST",
-                    name="webhook",
-                    handle_func=webhook,
-                )
+    # Setup Webhook Route
+    if isinstance(driver, ASGIMixin):
+        driver.setup_http_server(
+            HTTPServerSetup(
+                path=URL(config.webhook_route),
+                method="POST",
+                name="webhook",
+                handle_func=webhook,
             )
-        logger.opt(colors=True).success(f'✅ Webhook server mounted at "<y>{config.webhook_route}</y>"')
-        webhook_server_mounted = True
+        )
+    logger.opt(colors=True).success(f'✅ Webhook server mounted at "<y>{config.webhook_route}</y>"')
 

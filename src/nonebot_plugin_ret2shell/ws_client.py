@@ -1,7 +1,6 @@
 import asyncio
 from websockets.asyncio.client import connect
 import websockets.http11
-import nonebot
 from nonebot import logger, get_driver
 from .events import Event, from_json
 from .report import send_event_msg, send_ops_msg
@@ -11,7 +10,7 @@ from .__version__ import __version__
 
 async def ws_client():
     """
-    带有自动重连机制的 WebSocket 客户端
+    带有自动重连机制的 WebSocket 客户端，运行异常时会发送运维消息
     """
     ws_uri = f"{config.ret2shell_ws_link}&client={config.client_label}+v{__version__}"
     max_count = 7  # 最大翻倍次数
@@ -40,46 +39,42 @@ async def ws_client():
                 # 例如: 1s, 2s, 4s, 8s...
                 delay = 2 ** (retry_count - 1)
             logger.warning(f"⚠️ Connection lost. Reconnecting in {delay}s... (Attempt {retry_count})")
-            await send_ops_msg(f"👿 运行异常\n{e}")
+            await send_ops_msg(f"""👿 运行异常\n{e}""")
             await asyncio.sleep(delay)
 
 
-# Handle our WebSocket client according to bot connection
 driver = get_driver()
 ws_client_task: asyncio.Task = None
-logger.info(f"✅ Plugin loaded. Waiting for bot connection...")
 
 
-@driver.on_bot_connect
+@driver.on_startup
 async def run_ws_client():
-    if len(nonebot.get_bots()) == 1:
-        global ws_client_task
-        logger.info(f"✅ Bot ready. Connecting to WebSocket event API...")
-        if ws_client_task is None:
-            ws_client_task = asyncio.create_task(ws_client())
-        else:
-            # task is still cancelling
-            # 等待任务实际结束
-            try:
-                await ws_client_task
-            except asyncio.exceptions.CancelledError:
-                pass
-            ws_client_task = asyncio.create_task(ws_client())
+    global ws_client_task
+    logger.info("🔌 Connecting to WebSocket event API...")
+    if ws_client_task is None:
+        ws_client_task = asyncio.create_task(ws_client())
+    else:
+        # task is still cancelling
+        # 等待任务实际结束
+        try:
+            await ws_client_task
+        except asyncio.exceptions.CancelledError:
+            pass
+        ws_client_task = asyncio.create_task(ws_client())
 
 
-@driver.on_bot_disconnect
+@driver.on_shutdown
 async def shutdown_ws_client():
-    if len(nonebot.get_bots()) == 0:
-        global ws_client_task
-        logger.critical("❌ There are no bots connected. Closing connection to WebSocket event API...")
-        if ws_client_task and not ws_client_task.done():
-            ws_client_task.cancel()
-            # 等待任务实际结束
-            try:
-                await ws_client_task
-            except asyncio.exceptions.CancelledError:
-                pass
-        # 确认任务彻底结束后，再清空引用
-        ws_client_task = None
-        logger.info("❌ Connection to WebSocket event API closed.")
+    global ws_client_task
+    logger.info("🔌 Closing connection to WebSocket event API...")
+    if ws_client_task and not ws_client_task.done():
+        ws_client_task.cancel()
+        # 等待任务实际结束
+        try:
+            await ws_client_task
+        except asyncio.exceptions.CancelledError:
+            pass
+    # 确认任务彻底结束后，再清空引用
+    ws_client_task = None
+    logger.info("🔌 Connection to WebSocket event API closed.")
 
