@@ -2,9 +2,9 @@
 # Reference: https://github.com/ret2shell/ret2shell/blob/main/crates/event/src/events.rs
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 
 
 # ---------- 枚举类（对应 Rust 中的枚举变体）----------
@@ -317,49 +317,6 @@ def _asdict(obj):
             result[field_name] = _asdict(value)
         return result
     return obj
-
-
-@dataclass
-class EventContainer:
-    game_id: int
-    event: Event
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EventContainer":
-        return cls(
-            game_id=data["game_id"],
-            event=Event.from_dict(data["event"]),
-        )
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "game_id": self.game_id,
-            "event": self.event.to_dict(),
-        }
-
-
-# ---------- 广播枚举 ----------
-class Broadcast:
-    """等效于 Rust 中的 Broadcast 枚举"""
-    def __init__(self, kind: str, data: Optional[EventContainer] = None):
-        self.kind = kind  # "publish" 或 "heartbeat"
-        self.data = data  # 当 kind 为 "publish" 时包含 EventContainer
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Broadcast":
-        # data 应包含一个键："Publish" 或 "Heartbeat"
-        if "Publish" in data:
-            return cls("publish", EventContainer.from_dict(data["Publish"]))
-        elif "Heartbeat" in data:
-            return cls("heartbeat", None)
-        else:
-            raise ValueError("Broadcast object must have key 'Publish' or 'Heartbeat'")
-
-    def to_dict(self) -> Dict[str, Any]:
-        if self.kind == "publish":
-            return {"Publish": self.data.to_dict()}
-        else:
-            return {"Heartbeat": None}
 
 
 # ---------- 从 JSON 字符串反序列化的统一入口 ----------

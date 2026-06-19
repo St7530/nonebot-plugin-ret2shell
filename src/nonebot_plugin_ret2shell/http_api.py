@@ -71,7 +71,7 @@ async def login():
     captcha_validator = captcha_data.get("validator")
     captcha_id = captcha_data.get("id")
     captcha_challenge = captcha_data.get("challenge")
-    captcha_answer = "0xDEADBEEF"
+    captcha_answer = "0xDEADBEEF" # the default answer when captcha protection is disabled
     if captcha_validator == "pow":
         captcha_answer = await solve_pow(captcha_challenge)
 
@@ -239,7 +239,7 @@ async def generate_tag_rank_msg(tag_lowered: str, size=10):
                 submissions = submissions_data[0]
                 # Delete game admin's submissions whose team_id is None
                 submissions = [s for s in submissions if s.get('team_id') is not None]
-                submissions.sort(key=lambda x: (x["created_at"]))
+                submissions.sort(key=lambda x: x["created_at"])
 
                 for index, (submission) in enumerate(submissions):
                     submission_team_id = submission.get("team_id")
@@ -315,7 +315,8 @@ async def get_hint_details(challenge_id: int):
     """
     data = await get_api_json(f"/game/{game_id}/challenge/{challenge_id}/hint")
 
-    latest_hint = data[-1]
+    data.sort(key=lambda x: x["created_at"], reverse=True)
+    latest_hint = data[0]
     hint_cost = latest_hint.get("cost")
     hint_content = latest_hint.get("content")
     hint_created_at = latest_hint.get("created_at")
@@ -328,6 +329,7 @@ async def get_notification_details(title: str):
     """
     data = await get_api_json(f"/game/{game_id}/notification/")
 
+    data.sort(key=lambda x: x["published_at"], reverse=True)
     for notification in data:
         if notification.get("title") == title:
             content = notification.get("content")
