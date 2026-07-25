@@ -167,7 +167,7 @@ async def generate_rank_msg_by_team(teams: list, show_non_positive=False):
             message += f"""\n{index} [{team_name}] {team_score} pts"""
 
     if message == "":
-        message = """暂无队伍得分"""
+        message = """\n暂无队伍得分"""
     message += f"""\n更新时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
     return message
 
