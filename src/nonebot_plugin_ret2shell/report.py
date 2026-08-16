@@ -82,10 +82,13 @@ async def generate_event_msg(event: Event):
             msg_type = "public"
             if blood_state == 1:
                 message = f"""🥇 恭喜队伍 [{team_name}] 获得 [{challenge_tag_name}] 方向题目 [{challenge_name}] 的 [一血] ！"""
-            if blood_state == 2:
+            elif blood_state == 2:
                 message = f"""🥈 恭喜队伍 [{team_name}] 获得 [{challenge_tag_name}] 方向题目 [{challenge_name}] 的 [二血] ！"""
-            if blood_state == 3:
+            elif blood_state == 3:
                 message = f"""🥉 恭喜队伍 [{team_name}] 获得 [{challenge_tag_name}] 方向题目 [{challenge_name}] 的 [三血] ！"""
+            else:
+                message = f"""✅ 队伍 [{team_name}] 解出了 [{challenge_tag_name}] 方向题目 [{challenge_name}] ！"""
+                msg_type = "admin"
         elif event_type == "cheated":
             team_name = event.data.team.name
             peerteam_name = event.data.peer_team.name
