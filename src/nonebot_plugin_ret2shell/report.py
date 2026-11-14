@@ -52,7 +52,7 @@ async def generate_event_msg(event: Event):
 
     if event.kind == "challenge":
         timestamp = event.data.challenge.updated_at
-        challenge_tag_name = event.data.challenge.tag[0].name
+        challenge_tag_name = next(tag.name for tag in event.data.challenge.tag if tag.primary)
         challenge_name = event.data.challenge.name
         msg_type = "public"
 
@@ -73,7 +73,7 @@ async def generate_event_msg(event: Event):
 
     elif event.kind == "submission":
         timestamp = event.data.submission.created_at
-        challenge_tag_name = event.data.challenge.tag[0].name
+        challenge_tag_name = next(tag.name for tag in event.data.challenge.tag if tag.primary)
         challenge_name = event.data.challenge.name
 
         if event_type == "correct":
@@ -117,7 +117,7 @@ async def generate_event_msg(event: Event):
 
     elif event.kind == "chat":
         team_name = event.data.team.name
-        challenge_tag_name = event.data.challenge.tag[0].name
+        challenge_tag_name = next(tag.name for tag in event.data.challenge.tag if tag.primary)
         challenge_name = event.data.challenge.name
         content = event.data.content
         msg_type = "public"
